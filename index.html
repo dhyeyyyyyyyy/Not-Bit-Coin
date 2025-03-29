@@ -6,8 +6,8 @@
   <title> NOT COIN TAPPING </title>
   <style>
     body {
-      background: linear-gradient(145deg, black, yellow);
-      font-family: Arial, sans-serif;
+      background: linear-gradient(145deg, #1a1d23, #f7dc6f);
+      font-family: 'Arial', sans-serif;
       text-align: center;
       margin: 0;
       padding: 0;
@@ -18,10 +18,11 @@
       padding: 20px;
       max-width: 400px;
       margin: 50px auto;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-      color: black;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      color: #333333;
       position: relative;
       z-index: 2;
     }
@@ -30,6 +31,7 @@
       position: relative;
     }
 
+    /* Enhanced Coin */
     .coin {
       width: 150px;
       height: 150px;
@@ -41,12 +43,16 @@
       outline: none;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      position: relative;
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .coin:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 25px rgba(255, 223, 0, 0.8);
     }
 
     .coin:active {
       transform: scale(0.95);
-      transition: transform 0.1s;
     }
 
     .tap-effect {
@@ -70,15 +76,43 @@
       }
     }
 
+    /* Enhanced Gold Text */
     .gold-text {
-      font-size: 2.5em;
+      font-size: 2.8em;
+      font-weight: bold;
+      color: #f7b500;
+      text-shadow: 0 3px 10px rgba(255, 223, 0, 0.7);
     }
 
     .stats {
-      font-size: 1.2em;
+      font-size: 1.3em;
       margin: 20px 0;
+      color: #fff;
     }
 
+    /* Join Squad Button */
+    .join-squad {
+      background: linear-gradient(145deg, #ff4e50, #f9d423);
+      color: white;
+      padding: 12px 30px;
+      border-radius: 30px;
+      cursor: pointer;
+      display: inline-block;
+      text-align: center;
+      text-decoration: none;
+      margin: 20px auto;
+      font-size: 1.2em;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 20px rgba(255, 223, 0, 0.6);
+    }
+
+    .join-squad:hover {
+      background: linear-gradient(145deg, #f9d423, #ff4e50);
+      transform: scale(1.05);
+    }
+
+    /* Star Background Effect */
     .stars {
       position: fixed;
       width: 100%;
@@ -110,26 +144,47 @@
       }
     }
 
-    .join-squad {
-      background-color: #ffcc00;
-      color: #333;
-      padding: 10px 20px;
-      border-radius: 25px;
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: gold;
+      opacity: 0.7;
+      animation: fall 1.5s linear forwards;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+    }
+
+    /* Store Styles */
+    .store-container {
+      margin-top: 20px;
+    }
+
+    .store-item {
+      background: linear-gradient(145deg, #ffeb3b, #ffc107);
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      cursor: pointer;
       font-size: 1.2em;
-      text-decoration: none;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transition: background-color 0.3s, transform 0.2s;
-      display: inline-block;
-      margin-top: 10px;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 5px 12px rgba(255, 193, 7, 0.6);
     }
 
-    .join-squad:hover {
-      background-color: #ffdb4d;
-      transform: translateY(-2px);
-    }
-
-    .join-squad:active {
-      transform: translateY(1px);
+    .store-item:hover {
+      background: linear-gradient(145deg, #ffc107, #ffeb3b);
+      transform: scale(1.05);
     }
   </style>
 </head>
@@ -148,22 +203,45 @@
     <div class="stats">
       ⚡ <span id="energyValue">6500</span> / 6500
     </div>
+
+    <div id="achievementMessage"></div>
+
+    <div class="store-container">
+      <div class="store-item" onclick="buyBoost()">🚀 Buy Boost (50 Coins)</div>
+      <div class="store-item" onclick="buyTheme()">🎨 Change Theme (100 Coins)</div>
+    </div>
   </div>
 
   <script>
     let coinValue = 0;
     let energyValue = 6500;
+    let comboCount = 0;
+    let comboTimer;
+    let achievementsUnlocked = [];
+    let lastLogin = localStorage.getItem('lastLogin') || '';
 
+    // Handle tap logic
     function handleTap(event) {
       if (energyValue >= 3) {
-        coinValue += 12;
+        let coinsToAdd = 12;
+        comboCount++;
+        clearTimeout(comboTimer);
+        comboTimer = setTimeout(() => comboCount = 0, 1000);
+
+        if (comboCount >= 5) {
+          coinsToAdd += 50; // Combo bonus
+        }
+
+        coinValue += coinsToAdd;
         energyValue -= 3;
         document.getElementById('coinValue').textContent = coinValue;
         document.getElementById('energyValue').textContent = energyValue;
         createTapEffect(event.clientX, event.clientY);
+        checkAchievements();
       }
     }
 
+    // Create tap effect
     function createTapEffect(x, y) {
       const coin = document.getElementById('coin');
       const rect = coin.getBoundingClientRect();
@@ -175,18 +253,92 @@
       setTimeout(() => tapEffect.remove(), 500);
     }
 
+    // Check achievements
+    function checkAchievements() {
+      if (coinValue >= 100 && !achievementsUnlocked.includes('100')) {
+        unlockAchievement('Reached 100 Coins! 🎉');
+        achievementsUnlocked.push('100');
+        launchConfetti();
+      }
+
+      if (coinValue >= 500 && !achievementsUnlocked.includes('500')) {
+        unlockAchievement('Reached 500 Coins! 🚀');
+        achievementsUnlocked.push('500');
+        launchConfetti();
+      }
+    }
+
+    function unlockAchievement(message) {
+      document.getElementById('achievementMessage').textContent = message;
+      setTimeout(() => document.getElementById('achievementMessage').textContent = '', 3000);
+    }
+
+    // Confetti effect
+    function launchConfetti() {
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * window.innerWidth + 'px';
+        confetti.style.backgroundColor = ['gold', 'yellow', 'orange'][Math.floor(Math.random() * 3)];
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 1500);
+      }
+    }
+
+    // Star animation setup
     function createStars() {
       const starContainer = document.getElementById('starBackground');
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 50; i++) {
         let star = document.createElement('span');
-        star.style.left = Math.random() * window.innerWidth + 'px';
-        star.style.top = Math.random() * window.innerHeight + 'px';
-        star.style.animationDuration = Math.random() * 3 + 2 + 's';
+        let size = Math.random() * 2 + 1;
+        let left = Math.random() * 100;
+        let delay = Math.random() * 5;
+
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${left}%`;
+        star.style.animationDelay = `${delay}s`;
+
         starContainer.appendChild(star);
       }
     }
 
     createStars();
+
+    // Daily reward system
+    function checkDailyReward() {
+      const today = new Date().toLocaleDateString();
+      if (today !== lastLogin) {
+        coinValue += 100; // Daily bonus
+        localStorage.setItem('lastLogin', today);
+        alert('Daily reward: +100 Coins! 🎁');
+        document.getElementById('coinValue').textContent = coinValue;
+      }
+    }
+
+    checkDailyReward();
+
+    // Buy boost from store
+    function buyBoost() {
+      if (coinValue >= 50) {
+        coinValue -= 50;
+        alert('Boost activated! Double coins for 10 seconds! 🚀');
+        document.getElementById('coinValue').textContent = coinValue;
+      } else {
+        alert('Not enough coins! ❌');
+      }
+    }
+
+    // Change theme
+    function buyTheme() {
+      if (coinValue >= 100) {
+        coinValue -= 100;
+        document.body.style.background = 'linear-gradient(145deg, purple, blue)';
+        document.getElementById('coinValue').textContent = coinValue;
+      } else {
+        alert('Not enough coins! ❌');
+      }
+    }
   </script>
 </body>
 </html>
